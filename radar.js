@@ -99,8 +99,22 @@ export class Radar {
     this.place = null;
   }
 
-  async open(place) {
+  // 連打しても初期化が二重に走らないようにする
+  open(place) {
     this.place = place;
+    if (!this.opening) {
+      this.opening = this.doOpen().catch((e) => {
+        console.error(e);
+        this.panel.innerHTML = `<div class="card"><p class="error">雨雲レーダーを表示できませんでした：${esc(e.message)}</p>
+          <button class="primary-btn" type="button" id="rRetry">再読み込み</button></div>`;
+        this.panel.querySelector('#rRetry').onclick = () => { this.map = null; this.open(this.place); };
+      }).finally(() => { this.opening = null; });
+    }
+    return this.opening;
+  }
+
+  async doOpen() {
+    const place = this.place;
     if (!this.map) {
       this.panel.innerHTML = `<div class="card flush radar">
         <div class="radar-map" id="radarMap"><div class="radar-msg">地図を読み込み中…</div></div>

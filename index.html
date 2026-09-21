@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=1.3.0">
 </head>
 <body>
   <header class="topbar">
@@ -61,6 +61,7 @@
   <footer class="footer muted small">
     <p>気象データ：Open-Meteo（各国気象機関のモデル）／警報・地震・雨雲レーダー：気象庁／地図・地名検索：国土地理院</p>
     <p>本アプリは参考情報です。防災上の判断は必ず<a href="https://www.jma.go.jp/bosai/" target="_blank" rel="noopener">気象庁</a>や自治体の発表を確認してください。</p>
+    <p>バージョン <span id="appVersion">―</span></p>
   </footer>
 
   <dialog id="searchDialog" class="sheet">
@@ -102,6 +103,25 @@
     <div id="warnDetail"></div>
   </dialog>
 
-  <script type="module" src="app.js"></script>
+  <script>
+    // ファイルを直接開くと（file://）ブラウザの制限でアプリが動かないため案内を出す
+    if (location.protocol === 'file:') {
+      document.body.insertAdjacentHTML('afterbegin',
+        '<div style="background:#fff4bf;color:#5a4600;padding:12px 14px;border-radius:12px;margin:12px 0;font-size:14px">' +
+        '⚠ このページはファイルを直接開いているため動作しません。GitHub Pages などで公開したURL、' +
+        'またはローカルサーバー（http://localhost）経由で開いてください。詳しくは README.md を参照。</div>');
+    }
+  </script>
+  <script type="module" src="app.js?v=1.3.0"></script>
+  <script>
+    // 古い app.js がキャッシュから読み込まれた場合などに、真っ白のままにせず案内を出す
+    setTimeout(function () {
+      if (location.protocol === 'file:' || window.__appVersion === '1.3.0') return;
+      document.body.insertAdjacentHTML('afterbegin',
+        '<div style="background:#fff4bf;color:#5a4600;padding:12px 14px;border-radius:12px;margin:12px 0;font-size:14px">' +
+        '⚠ アプリの一部が古いまま、または読み込めていません（表示中: ' + (window.__appVersion || '不明') + ' / 必要: 1.3.0）。' +
+        '全ファイルがアップロードされているか確認し、数分おいてページを再読み込みしてください。</div>');
+    }, 6000);
+  </script>
 </body>
 </html>
