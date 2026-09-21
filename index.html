@@ -5,18 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>そらナビ</title>
   <meta name="description" content="天気・警報・地震情報をまとめて確認できるアプリ">
-  <meta name="theme-color" content="#0b63c5" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0e1621" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#2a82e0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="そらナビ">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=1.3.0">
+  <link rel="stylesheet" href="style.css?v=1.4.0">
 </head>
-<body>
+<body data-sky="partly">
   <header class="topbar">
     <div class="topbar-row">
       <div class="place">
@@ -40,7 +39,7 @@
   <div id="quakeAlert" class="quake-alert" hidden></div>
   <button id="warnBanner" class="warn-banner" hidden></button>
 
-  <section id="hero" class="hero card" aria-live="polite"></section>
+  <section id="hero" class="hero" aria-live="polite"></section>
 
   <div class="tabs" role="tablist">
     <button role="tab" data-tab="days" aria-selected="true">今日・明日</button>
@@ -112,14 +111,14 @@
         'またはローカルサーバー（http://localhost）経由で開いてください。詳しくは README.md を参照。</div>');
     }
   </script>
-  <script type="module" src="app.js?v=1.3.0"></script>
+  <script type="module" src="app.js?v=1.4.0"></script>
   <script>
     // 古い app.js がキャッシュから読み込まれた場合などに、真っ白のままにせず案内を出す
     setTimeout(function () {
-      if (location.protocol === 'file:' || window.__appVersion === '1.3.0') return;
+      if (location.protocol === 'file:' || window.__appVersion === '1.4.0') return;
       document.body.insertAdjacentHTML('afterbegin',
         '<div style="background:#fff4bf;color:#5a4600;padding:12px 14px;border-radius:12px;margin:12px 0;font-size:14px">' +
-        '⚠ アプリの一部が古いまま、または読み込めていません（表示中: ' + (window.__appVersion || '不明') + ' / 必要: 1.3.0）。' +
+        '⚠ アプリの一部が古いまま、または読み込めていません（表示中: ' + (window.__appVersion || '不明') + ' / 必要: 1.4.0）。' +
         '全ファイルがアップロードされているか確認し、数分おいてページを再読み込みしてください。</div>');
     }, 6000);
   </script>

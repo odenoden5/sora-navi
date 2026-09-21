@@ -25,23 +25,28 @@ export async function fetchForecast(lat, lon) {
   return res.json();
 }
 
-// WMO天気コード → 日本語・アイコン
+// WMO天気コード → [日本語, 絵文字(予備), アイコン名(昼), アイコン名(夜), 空の種類]
+// アイコン名は Meteocons (@bybas/weather-icons, MIT) のファイル名。'*' は -day / -night に置き換える
 const WMO = {
-  0: ['快晴', '☀️', '🌙'], 1: ['晴れ', '🌤️', '🌙'], 2: ['晴れ時々くもり', '⛅', '☁️'], 3: ['くもり', '☁️', '☁️'],
-  45: ['霧', '🌫️'], 48: ['霧（着氷）', '🌫️'],
-  51: ['弱い霧雨', '🌦️', '🌧️'], 53: ['霧雨', '🌦️', '🌧️'], 55: ['強い霧雨', '🌧️'],
-  56: ['着氷性の霧雨', '🌧️'], 57: ['強い着氷性の霧雨', '🌧️'],
-  61: ['小雨', '🌧️'], 63: ['雨', '🌧️'], 65: ['強い雨', '🌧️'],
-  66: ['着氷性の雨', '🌧️'], 67: ['強い着氷性の雨', '🌧️'],
-  71: ['小雪', '🌨️'], 73: ['雪', '🌨️'], 75: ['大雪', '❄️'], 77: ['霧雪', '🌨️'],
-  80: ['にわか雨', '🌦️', '🌧️'], 81: ['強いにわか雨', '🌧️'], 82: ['激しいにわか雨', '⛈️'],
-  85: ['にわか雪', '🌨️'], 86: ['強いにわか雪', '❄️'],
-  95: ['雷雨', '⛈️'], 96: ['ひょうを伴う雷雨', '⛈️'], 99: ['激しいひょうを伴う雷雨', '⛈️'],
+  0: ['快晴', '☀️', 'clear-*', 'clear'], 1: ['晴れ', '🌤️', 'partly-cloudy-*', 'clear'],
+  2: ['晴れ時々くもり', '⛅', 'partly-cloudy-*', 'partly'], 3: ['くもり', '☁️', 'overcast-*', 'cloudy'],
+  45: ['霧', '🌫️', 'fog-*', 'cloudy'], 48: ['霧（着氷）', '🌫️', 'fog-*', 'cloudy'],
+  51: ['弱い霧雨', '🌦️', 'partly-cloudy-*-drizzle', 'rain'], 53: ['霧雨', '🌦️', 'drizzle', 'rain'], 55: ['強い霧雨', '🌧️', 'drizzle', 'rain'],
+  56: ['着氷性の霧雨', '🌧️', 'sleet', 'rain'], 57: ['強い着氷性の霧雨', '🌧️', 'sleet', 'rain'],
+  61: ['小雨', '🌧️', 'partly-cloudy-*-rain', 'rain'], 63: ['雨', '🌧️', 'rain', 'rain'], 65: ['強い雨', '🌧️', 'rain', 'storm'],
+  66: ['着氷性の雨', '🌧️', 'sleet', 'rain'], 67: ['強い着氷性の雨', '🌧️', 'sleet', 'rain'],
+  71: ['小雪', '🌨️', 'partly-cloudy-*-snow', 'snow'], 73: ['雪', '🌨️', 'snow', 'snow'], 75: ['大雪', '❄️', 'snow', 'snow'], 77: ['霧雪', '🌨️', 'snow', 'snow'],
+  80: ['にわか雨', '🌦️', 'partly-cloudy-*-rain', 'rain'], 81: ['強いにわか雨', '🌧️', 'rain', 'rain'], 82: ['激しいにわか雨', '⛈️', 'thunderstorms-rain', 'storm'],
+  85: ['にわか雪', '🌨️', 'partly-cloudy-*-snow', 'snow'], 86: ['強いにわか雪', '❄️', 'snow', 'snow'],
+  95: ['雷雨', '⛈️', 'thunderstorms-*-rain', 'storm'], 96: ['ひょうを伴う雷雨', '⛈️', 'hail', 'storm'], 99: ['激しいひょうを伴う雷雨', '⛈️', 'hail', 'storm'],
 };
 
 export function wmo(code, isDay = 1) {
-  const e = WMO[code] || ['不明', '❔'];
-  return { label: e[0], icon: !isDay && e[2] ? e[2] : e[1] };
+  const e = WMO[code] || ['不明', '❔', 'not-available', 'cloudy'];
+  const icon = e[2].replace('*', isDay ? 'day' : 'night');
+  let sky = e[3];
+  if (!isDay) sky = sky === 'clear' || sky === 'partly' ? 'night' : sky === 'snow' ? 'night-snow' : 'night-cloudy';
+  return { label: e[0], emoji: e[1], icon, sky };
 }
 
 const DIRS = ['北', '北北東', '北東', '東北東', '東', '東南東', '南東', '南南東', '南', '南南西', '南西', '西南西', '西', '西北西', '北西', '北北西'];

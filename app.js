@@ -1,13 +1,13 @@
-// ファイルを更新したら、ここと index.html・sw.js の「1.3.0」をそろえて上げる（古いキャッシュ対策）
-import { fetchForecast, buildModel, wmo, windDir, jstNow } from './weather.js?v=1.3.0';
+// ファイルを更新したら、ここと index.html・sw.js の「1.4.0」をそろえて上げる（古いキャッシュ対策）
+import { fetchForecast, buildModel, wmo, windDir, jstNow } from './weather.js?v=1.4.0';
 import {
   resolveArea, fetchWarnings, fetchQuakes, localIntensity, warningPageUrl,
   shindoRank, shindoLabel, demoWarnings, demoQuake,
-} from './jma.js?v=1.3.0';
-import { PRESETS, searchPlaces, reverseMuni, currentPosition, load, save, addRecent } from './geo.js?v=1.3.0';
-import { Radar } from './radar.js?v=1.3.0';
+} from './jma.js?v=1.4.0';
+import { PRESETS, searchPlaces, reverseMuni, currentPosition, load, save, addRecent } from './geo.js?v=1.4.0';
+import { Radar } from './radar.js?v=1.4.0';
 
-export const APP_VERSION = '1.3.0';
+export const APP_VERSION = '1.4.0';
 
 const $ = (s) => document.querySelector(s);
 window.__appVersion = APP_VERSION;
@@ -287,11 +287,19 @@ function renderWeather() {
   renderWeekly(m);
 }
 
+// 天気アイコン（Meteocons）。anim=true はアニメーション版。読めない時は絵文字で代用
+const ICON_BASE = 'https://cdn.jsdelivr.net/npm/@bybas/weather-icons@2.0.0/';
+function wxImg(name, { anim = false, size = 32, alt = '', fallback = '', cls = '' } = {}) {
+  const src = anim ? `${ICON_BASE}production/fill/all/${name}.svg` : `${ICON_BASE}design/fill/export/wi_${name}.svg`;
+  return `<img class="wx ${cls}" src="${src}" width="${size}" height="${size}" alt="${esc(alt)}" decoding="async" onerror="this.replaceWith(document.createTextNode('${fallback}'))">`;
+}
+const wxIcon = (x, opt = {}) => wxImg(x.icon, { ...opt, alt: x.label, fallback: x.emoji });
+
 function umbrellaLine(day, labelPrefix) {
   if (!day) return '';
   return day.umbrella.length
-    ? `<div class="umbrella yes"><span class="u-icon">☂</span><div><b>${labelPrefix}傘が必要</b><div>${day.umbrella.join('、')}</div></div></div>`
-    : `<div class="umbrella no"><span class="u-icon">🌂</span><div>${labelPrefix}傘は<b>不要</b>です</div></div>`;
+    ? `<div class="umbrella yes">${wxImg('umbrella', { anim: true, size: 44, fallback: '☂' })}<div><b>${labelPrefix}傘が必要</b><div class="u-times">${day.umbrella.join('、')}</div></div></div>`
+    : `<div class="umbrella no">${wxImg('umbrella', { size: 36, fallback: '🌂', cls: 'dim' })}<div>${labelPrefix}傘は<b>不要</b>です</div></div>`;
 }
 
 function maxMin(day) {
@@ -304,23 +312,25 @@ function maxMin(day) {
 function renderHero(m) {
   const c = m.current, t = m.today;
   const x = wmo(c.code, c.isDay);
+  document.body.dataset.sky = x.sky;
+  const sky = getComputedStyle(document.body).getPropertyValue('--sky-a').trim();
+  if (sky) document.querySelector('meta[name=theme-color]')?.setAttribute('content', sky);
+  const hl = (label, v, cls) => `<span class="hl-item"><span class="hl-lbl">${label}</span><b class="${cls}">${r1(v.temp)}°</b><small>${v.hour}時頃</small></span>`;
   $('#hero').innerHTML = `
-    <div class="now">
-      <div class="now-icon" aria-hidden="true">${x.icon}</div>
-      <div>
-        <div class="now-temp ${tempClass(c.temp)}">${f1(c.temp)}<small>℃</small></div>
-        <div class="now-label">${esc(x.label)} <span class="muted small">（${m.now.hour}時台）</span></div>
-      </div>
+    <div class="hero-main">
+      <div class="hero-icon">${wxIcon(x, { anim: true, size: 150 })}</div>
+      <div class="now-temp">${f1(c.temp)}<span class="deg">°</span></div>
+      <div class="now-label">${esc(x.label)}</div>
+      ${t ? `<div class="hl">${hl('最高', t.max, tempClass(t.max.temp))}${hl('最低', t.min, t.min.temp < 0 ? 't-cold' : '')}</div>` : ''}
     </div>
-    <dl class="stats">
-      <div><dt>降水確率</dt><dd>${r1(c.pop)}%</dd></div>
-      <div><dt>降水量</dt><dd>${f1(c.mm)}mm</dd></div>
-      <div><dt>湿度</dt><dd>${r1(c.rh)}%</dd></div>
-      <div><dt>風</dt><dd>${wind(c.ws, c.wd)}</dd></div>
+    <dl class="stats glass">
+      <div>${wxImg('umbrella', { size: 30 })}<dt>降水確率</dt><dd>${r1(c.pop)}<small>%</small></dd></div>
+      <div>${wxImg('raindrops', { size: 30 })}<dt>降水量</dt><dd>${f1(c.mm)}<small>mm</small></dd></div>
+      <div>${wxImg('humidity', { size: 30 })}<dt>湿度</dt><dd>${r1(c.rh)}<small>%</small></dd></div>
+      <div>${wxImg('wind', { size: 30 })}<dt>${arrow(c.wd)}${windDir(c.wd)}</dt><dd>${f1(c.ws)}<small>m/s</small></dd></div>
     </dl>
-    ${t ? maxMin(t) : ''}
     ${umbrellaLine(t, 'この後、')}
-    <button class="link-btn" data-goto="radar">🌧 雨雲レーダーで見る ›</button>`;
+    <button class="link-btn" data-goto="radar">雨雲レーダーで見る <span aria-hidden="true">›</span></button>`;
 }
 
 $('#hero').addEventListener('click', (e) => {
@@ -335,7 +345,7 @@ function dayCard(day, title) {
   return `<article class="card day">
     <header class="day-head">
       <h2>${title} <span class="muted small ${dayClass(day.date)}">${md(day.date)}(${WEEK[dow(day.date)]})</span></h2>
-      <div class="day-wx"><span class="big-icon" aria-hidden="true">${x.icon}</span>${esc(x.label)}</div>
+      <div class="day-wx">${wxIcon(x, { anim: true, size: 64 })}<span>${esc(x.label)}</span></div>
     </header>
     ${maxMin(day)}
     ${umbrellaLine(day, '')}
@@ -388,7 +398,7 @@ function renderHourly(m) {
     return `<div class="hcol ${h.umbrella ? 'wet' : ''} ${newDay ? 'newday' : ''}">
       <div class="hdate ${dayClass(h.date)}">${newDay || h === hs[0] ? `${md(h.date)}(${WEEK[dow(h.date)]})` : ''}</div>
       <div class="htime">${h.hour}時</div>
-      <div class="hicon" title="${esc(x.label)}">${x.icon}</div>
+      <div class="hicon" title="${esc(x.label)}">${wxIcon(x, { size: 40 })}</div>
     </div>`;
   };
   const row = (label, f) => `<div class="hrow"><div class="hlabel">${label}</div>${hs.map((h) => `<div class="hcell ${h.umbrella ? 'wet' : ''}">${f(h)}</div>`).join('')}</div>`;
@@ -419,7 +429,7 @@ function renderWeekly(m) {
       const hol = state.holidays[d.date];
       return `<li class="wrow ${d.umbrella ? 'wet' : ''}">
         <div class="wdate ${dayClass(d.date)}">${i === 0 ? '今日' : i === 1 ? '明日' : md(d.date)}<span>(${WEEK[dow(d.date)]})</span>${hol ? `<em title="${esc(hol)}">祝</em>` : ''}</div>
-        <div class="wicon" title="${esc(x.label)}">${x.icon}</div>
+        <div class="wicon" title="${esc(x.label)}">${wxIcon(x, { size: 40 })}</div>
         <div class="wtemp">
           <span class="tmin">${r1(d.tmin)}°</span>
           <span class="tbar"><i style="left:${pct(d.tmin)}%;right:${100 - pct(d.tmax)}%"></i></span>
