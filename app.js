@@ -4,6 +4,7 @@ import {
   shindoRank, shindoLabel, demoWarnings, demoQuake,
 } from './jma.js';
 import { PRESETS, searchPlaces, reverseMuni, currentPosition, load, save, addRecent } from './geo.js';
+import { Radar } from './radar.js';
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -54,6 +55,7 @@ function setPlace(p) {
   save('lastPlace', p);
   state.weather = null;
   state.warn = null;
+  radar.setPlace(p);
   renderChips();
   renderAll();
   refreshAll(true);
@@ -147,7 +149,11 @@ function showTab(tab) {
   save('tab', tab);
   document.querySelectorAll('[data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
   document.querySelectorAll('.tab-panel').forEach((p) => { p.hidden = p.id !== `tab-${tab}`; });
+  if (tab === 'radar') radar.open(state.place);
+  else radar.stop();
 }
+
+const radar = new Radar($('#tab-radar'));
 
 // ---------- データ取得 ----------
 async function loadWeather(force) {
@@ -214,6 +220,7 @@ async function refreshAll(force = false) {
       loadWeather(force).then(renderWeather),
       loadWarnings(force).then(renderWarnings),
       loadQuakes(force).then(renderQuakes),
+      state.tab === 'radar' ? radar.refresh(force) : null,
     ]);
   } finally {
     refreshing = false;
@@ -307,8 +314,15 @@ function renderHero(m) {
       <div><dt>風</dt><dd>${wind(c.ws, c.wd)}</dd></div>
     </dl>
     ${t ? maxMin(t) : ''}
-    ${umbrellaLine(t, 'この後、')}`;
+    ${umbrellaLine(t, 'この後、')}
+    <button class="link-btn" data-goto="radar">🌧 雨雲レーダーで見る ›</button>`;
 }
+
+$('#hero').addEventListener('click', (e) => {
+  if (!e.target.closest('[data-goto=radar]')) return;
+  showTab('radar');
+  $('.tabs').scrollIntoView({ behavior: 'smooth' });
+});
 
 function dayCard(day, title) {
   if (!day) return '';
