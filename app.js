@@ -1,12 +1,17 @@
-import { fetchForecast, buildModel, wmo, windDir, jstNow } from './weather.js';
+// ファイルを更新したら、ここと index.html・sw.js の「1.3.0」をそろえて上げる（古いキャッシュ対策）
+import { fetchForecast, buildModel, wmo, windDir, jstNow } from './weather.js?v=1.3.0';
 import {
   resolveArea, fetchWarnings, fetchQuakes, localIntensity, warningPageUrl,
   shindoRank, shindoLabel, demoWarnings, demoQuake,
-} from './jma.js';
-import { PRESETS, searchPlaces, reverseMuni, currentPosition, load, save, addRecent } from './geo.js';
-import { Radar } from './radar.js';
+} from './jma.js?v=1.3.0';
+import { PRESETS, searchPlaces, reverseMuni, currentPosition, load, save, addRecent } from './geo.js?v=1.3.0';
+import { Radar } from './radar.js?v=1.3.0';
+
+export const APP_VERSION = '1.3.0';
 
 const $ = (s) => document.querySelector(s);
+window.__appVersion = APP_VERSION;
+$('#appVersion').textContent = APP_VERSION;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const DEMO = new URLSearchParams(location.search).has('demo');
 
