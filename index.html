@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=1.4.0">
+  <link rel="stylesheet" href="style.css?v=1.5.0">
 </head>
 <body data-sky="partly">
   <header class="topbar">
@@ -35,12 +35,16 @@
     <nav class="chips" id="chips" aria-label="地点"></nav>
   </header>
 
+  <div class="layout">
+  <aside class="side">
   <div id="offline" class="notice offline" hidden></div>
   <div id="quakeAlert" class="quake-alert" hidden></div>
   <button id="warnBanner" class="warn-banner" hidden></button>
 
   <section id="hero" class="hero" aria-live="polite"></section>
+  </aside>
 
+  <div class="content">
   <div class="tabs" role="tablist">
     <button role="tab" data-tab="days" aria-selected="true">今日・明日</button>
     <button role="tab" data-tab="hourly" aria-selected="false">1時間</button>
@@ -56,6 +60,8 @@
     <section id="tab-radar" class="tab-panel" hidden></section>
     <section id="tab-quake" class="tab-panel" hidden></section>
   </main>
+  </div>
+  </div>
 
   <footer class="footer muted small">
     <p>気象データ：Open-Meteo（各国気象機関のモデル）／警報・地震・雨雲レーダー：気象庁／地図・地名検索：国土地理院</p>
@@ -111,14 +117,14 @@
         'またはローカルサーバー（http://localhost）経由で開いてください。詳しくは README.md を参照。</div>');
     }
   </script>
-  <script type="module" src="app.js?v=1.4.0"></script>
+  <script type="module" src="app.js?v=1.5.0"></script>
   <script>
     // 古い app.js がキャッシュから読み込まれた場合などに、真っ白のままにせず案内を出す
     setTimeout(function () {
-      if (location.protocol === 'file:' || window.__appVersion === '1.4.0') return;
+      if (location.protocol === 'file:' || window.__appVersion === '1.5.0') return;
       document.body.insertAdjacentHTML('afterbegin',
         '<div style="background:#fff4bf;color:#5a4600;padding:12px 14px;border-radius:12px;margin:12px 0;font-size:14px">' +
-        '⚠ アプリの一部が古いまま、または読み込めていません（表示中: ' + (window.__appVersion || '不明') + ' / 必要: 1.4.0）。' +
+        '⚠ アプリの一部が古いまま、または読み込めていません（表示中: ' + (window.__appVersion || '不明') + ' / 必要: 1.5.0）。' +
         '全ファイルがアップロードされているか確認し、数分おいてページを再読み込みしてください。</div>');
     }, 6000);
   </script>

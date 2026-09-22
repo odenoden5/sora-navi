@@ -1,13 +1,13 @@
-// ファイルを更新したら、ここと index.html・sw.js の「1.4.0」をそろえて上げる（古いキャッシュ対策）
-import { fetchForecast, buildModel, wmo, windDir, jstNow } from './weather.js?v=1.4.0';
+// ファイルを更新したら、ここと index.html・sw.js の「1.5.0」をそろえて上げる（古いキャッシュ対策）
+import { fetchForecast, buildModel, wmo, windDir, jstNow } from './weather.js?v=1.5.0';
 import {
   resolveArea, fetchWarnings, fetchQuakes, localIntensity, warningPageUrl,
   shindoRank, shindoLabel, demoWarnings, demoQuake,
-} from './jma.js?v=1.4.0';
-import { PRESETS, searchPlaces, reverseMuni, currentPosition, load, save, addRecent } from './geo.js?v=1.4.0';
-import { Radar } from './radar.js?v=1.4.0';
+} from './jma.js?v=1.5.0';
+import { PRESETS, searchPlaces, reverseMuni, currentPosition, load, save, addRecent } from './geo.js?v=1.5.0';
+import { Radar } from './radar.js?v=1.5.0';
 
-export const APP_VERSION = '1.4.0';
+export const APP_VERSION = '1.5.0';
 
 const $ = (s) => document.querySelector(s);
 window.__appVersion = APP_VERSION;
@@ -159,6 +159,11 @@ function showTab(tab) {
 }
 
 const radar = new Radar($('#tab-radar'));
+
+// ヘッダーの高さをCSSに渡す（iPadの2列表示で左列をヘッダーの下に固定するため）
+const syncHeaderHeight = () => document.documentElement.style.setProperty('--header-h', `${$('.topbar').offsetHeight}px`);
+new ResizeObserver(syncHeaderHeight).observe($('.topbar'));
+window.addEventListener('resize', () => { syncHeaderHeight(); radar.map?.invalidateSize(); });
 
 // ---------- データ取得 ----------
 async function loadWeather(force) {

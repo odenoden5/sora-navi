@@ -48,6 +48,7 @@ body[data-sky="night-cloudy"] { --sky-a: #0d1420; --sky-b: #2c3a4f; --sky-solid:
 body[data-sky="night-snow"]   { --sky-a: #111b2d; --sky-b: #3d4f69; --sky-solid: #1b2639; }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; background: var(--sky-a); }
 body {
   margin: 0;
@@ -417,6 +418,57 @@ img.wx.dim { opacity: .55; }
   .wtemp { justify-content: center; gap: 8px; }
   .tmin, .tmax { width: auto; font-size: 1rem; }
 }
+/* =========================================================
+   iPad・タブレット
+   ========================================================= */
+/* 縦向き（幅700px〜）：1列のまま広げ、今日・明日を横並びに */
+@media (min-width: 700px) {
+  body { max-width: 980px; padding-left: max(24px, env(safe-area-inset-left)); padding-right: max(24px, env(safe-area-inset-right)); }
+  .topbar { margin: 0 -24px; padding-left: 24px; padding-right: 24px; }
+  .place h1 { font-size: 1.8rem; }
+  .chip { min-height: 40px; font-size: 1rem; }
+  .hero-icon { height: 150px; }
+  .hero-icon img { width: 180px; height: 180px; }
+  .now-temp { font-size: 7rem; }
+  .now-label { font-size: 1.4rem; }
+  .hl { font-size: 1.1rem; }
+  .stats dd { font-size: 1.35rem; }
+  .stats dt { font-size: .8rem; }
+  .tabs { max-width: 640px; margin-inline: auto; }
+  .tabs button { font-size: .95rem; min-height: 44px; }
+  #tab-days { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  #tab-days .card { margin-bottom: 0; }
+  .wrow { grid-template-columns: 96px 48px 1fr 96px 72px; gap: 12px; padding: 9px 20px; }
+  .wdate { font-size: 1rem; }
+  .wtemp { gap: 10px; }
+  .tmin, .tmax { font-size: 1.05rem; }
+  .tbar { height: 8px; border-radius: 4px; }
+  .radar-map { height: min(70vh, 760px); }
+  .hcol, .hcell { width: 64px; }
+  .quakes { display: grid; grid-template-columns: 1fr 1fr; }
+  .quake:nth-child(odd) { border-right: 1px solid var(--line); }
+  .footer { text-align: center; }
+}
+
+/* 横向き（幅1000px〜）：左に現在の天気と警報を固定、右にタブの内容 */
+@media (min-width: 1000px) {
+  body { max-width: 1400px; }
+  .layout { display: grid; grid-template-columns: minmax(360px, 420px) 1fr; gap: 28px; align-items: start; }
+  .side {
+    position: sticky; top: calc(var(--header-h, 120px) + 12px);
+    max-height: calc(100vh - var(--header-h, 120px) - 24px); overflow-y: auto; scrollbar-width: none;
+    padding-bottom: 12px;
+  }
+  .side::-webkit-scrollbar { display: none; }
+  .hero-icon { height: 130px; }
+  .hero-icon img { width: 160px; height: 160px; }
+  .now-temp { font-size: 6.2rem; }
+  .stats dd { font-size: 1.2rem; }
+  .content { min-width: 0; padding-top: 12px; }
+  .tabs { max-width: none; margin-top: 0; }
+  .radar-map { height: calc(100vh - var(--header-h, 120px) - 260px); min-height: 420px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before { animation: none !important; transition: none !important; }
 }
