@@ -1,13 +1,16 @@
-// ファイルを更新したら、ここと index.html・sw.js の「1.5.0」をそろえて上げる（古いキャッシュ対策）
-import { fetchForecast, buildModel, wmo, windDir, jstNow } from './weather.js?v=1.5.0';
+// ファイルを更新したら、ここと index.html・sw.js の「1.6.0」をそろえて上げる（古いキャッシュ対策）
+import { fetchForecast, buildModel, wmo, windDir, jstNow } from './weather.js?v=1.6.0';
 import {
   resolveArea, fetchWarnings, fetchQuakes, localIntensity, warningPageUrl,
   shindoRank, shindoLabel, demoWarnings, demoQuake,
-} from './jma.js?v=1.5.0';
-import { PRESETS, searchPlaces, reverseMuni, currentPosition, load, save, addRecent } from './geo.js?v=1.5.0';
-import { Radar } from './radar.js?v=1.5.0';
+} from './jma.js?v=1.6.0';
+import { PRESETS, searchPlaces, reverseMuni, currentPosition, load, save, addRecent } from './geo.js?v=1.6.0';
+import { Radar } from './radar.js?v=1.6.0';
+import { Typhoon, fetchTyphoons, typhoonTitle } from './typhoon.js?v=1.6.0';
+import { fetchObservation } from './amedas.js?v=1.6.0';
+import { clothing } from './clothing.js?v=1.6.0';
 
-export const APP_VERSION = '1.5.0';
+export const APP_VERSION = '1.6.0';
 
 const $ = (s) => document.querySelector(s);
 window.__appVersion = APP_VERSION;
@@ -17,6 +20,8 @@ const DEMO = new URLSearchParams(location.search).has('demo');
 
 const WEATHER_TTL = 30 * 60e3;
 const ALERT_TTL = 3 * 60e3;
+const OBS_TTL = 10 * 60e3;
+const TYPHOON_TTL = 10 * 60e3;
 
 const state = {
   place: load('lastPlace', PRESETS[0]),
@@ -25,6 +30,8 @@ const state = {
   weather: null, // { raw, t, stale }
   warn: null, // { data, t, stale } | { error }
   quakes: null, // { list, t, stale } | { error }
+  obs: null, // アメダス実況 { data, t } | { error }
+  typhoons: null, // { data, t } | { error }
   holidays: {},
 };
 
@@ -61,6 +68,8 @@ function setPlace(p) {
   state.weather = null;
   state.warn = null;
   radar.setPlace(p);
+  typhoon.setPlace(p);
+  state.obs = null;
   renderChips();
   renderAll();
   refreshAll(true);
@@ -156,14 +165,16 @@ function showTab(tab) {
   document.querySelectorAll('.tab-panel').forEach((p) => { p.hidden = p.id !== `tab-${tab}`; });
   if (tab === 'radar') radar.open(state.place);
   else radar.stop();
+  if (tab === 'typhoon') typhoon.open(state.place, state.typhoons?.data);
 }
 
 const radar = new Radar($('#tab-radar'));
+const typhoon = new Typhoon($('#tab-typhoon'));
 
 // ヘッダーの高さをCSSに渡す（iPadの2列表示で左列をヘッダーの下に固定するため）
 const syncHeaderHeight = () => document.documentElement.style.setProperty('--header-h', `${$('.topbar').offsetHeight}px`);
 new ResizeObserver(syncHeaderHeight).observe($('.topbar'));
-window.addEventListener('resize', () => { syncHeaderHeight(); radar.map?.invalidateSize(); });
+window.addEventListener('resize', () => { syncHeaderHeight(); radar.map?.invalidateSize(); typhoon.resize(); });
 
 // ---------- データ取得 ----------
 async function loadWeather(force) {
@@ -210,6 +221,31 @@ async function loadQuakes(force) {
   }
 }
 
+async function loadObservation(force) {
+  const p = state.place, key = `obs:${placeId(p)}`;
+  if (!force && state.obs?.t && Date.now() - state.obs.t < OBS_TTL) return;
+  try {
+    const data = await fetchObservation(p.lat, p.lon);
+    if (p !== state.place) return;
+    state.obs = { data, t: Date.now() };
+    save(key, state.obs);
+  } catch (e) {
+    const c = load(key, null);
+    state.obs = c ? { ...c, stale: true } : { error: '実況を取得できませんでした' };
+  }
+}
+
+async function loadTyphoons(force) {
+  if (!force && state.typhoons?.t && Date.now() - state.typhoons.t < TYPHOON_TTL) return;
+  try {
+    state.typhoons = { data: await fetchTyphoons(), t: Date.now() };
+    save('typhoons', state.typhoons);
+  } catch (e) {
+    const c = load('typhoons', null);
+    state.typhoons = c ? { ...c, stale: true } : { error: '台風情報を取得できませんでした' };
+  }
+}
+
 async function loadHolidays() {
   const c = load('holidays', null);
   if (c && Date.now() - c.t < 30 * 864e5) { state.holidays = c.d; return; }
@@ -230,6 +266,8 @@ async function refreshAll(force = false) {
       loadWeather(force).then(renderWeather),
       loadWarnings(force).then(renderWarnings),
       loadQuakes(force).then(renderQuakes),
+      loadObservation(force).then(renderWeather),
+      loadTyphoons(force).then(renderTyphoons),
       state.tab === 'radar' ? radar.refresh(force) : null,
     ]);
   } finally {
@@ -251,6 +289,7 @@ function renderAll() {
   renderWeather();
   renderWarnings();
   renderQuakes();
+  renderTyphoons();
   renderStatus();
 }
 
@@ -300,6 +339,22 @@ function wxImg(name, { anim = false, size = 32, alt = '', fallback = '', cls = '
 }
 const wxIcon = (x, opt = {}) => wxImg(x.icon, { ...opt, alt: x.label, fallback: x.emoji });
 
+// アメダスの実況（日照・積雪など）
+function obsLine() {
+  const o = state.obs;
+  if (!o?.data) return '';
+  const d = o.data;
+  const item = (label, v) => `<span><b>${label}</b> ${v}</span>`;
+  const parts = [];
+  if (d.temp != null) parts.push(item('気温', `${f1(d.temp)}℃`));
+  if (d.sun1h) parts.push(item('日照', `${f1(d.sun1h.value)}h<small class="muted">/1時間</small>`));
+  if (d.snow) parts.push(item('積雪', `${r1(d.snow.value)}cm`));
+  if (d.precipitation24h != null) parts.push(item('24時間雨量', `${f1(d.precipitation24h)}mm`));
+  if (!parts.length) return '';
+  return `<div class="obs glass"><div class="obs-head muted small">アメダス${esc(d.station)}の実況（${hm(d.time)}）</div>
+    <div class="obs-items">${parts.join('')}</div></div>`;
+}
+
 function umbrellaLine(day, labelPrefix) {
   if (!day) return '';
   return day.umbrella.length
@@ -334,6 +389,7 @@ function renderHero(m) {
       <div>${wxImg('humidity', { size: 30 })}<dt>湿度</dt><dd>${r1(c.rh)}<small>%</small></dd></div>
       <div>${wxImg('wind', { size: 30 })}<dt>${arrow(c.wd)}${windDir(c.wd)}</dt><dd>${f1(c.ws)}<small>m/s</small></dd></div>
     </dl>
+    ${obsLine()}
     ${umbrellaLine(t, 'この後、')}
     <button class="link-btn" data-goto="radar">雨雲レーダーで見る <span aria-hidden="true">›</span></button>`;
 }
@@ -343,6 +399,17 @@ $('#hero').addEventListener('click', (e) => {
   showTab('radar');
   $('.tabs').scrollIntoView({ behavior: 'smooth' });
 });
+
+// 服装のめやす
+function clothingBlock(day) {
+  const c = clothing(day);
+  if (!c) return '';
+  return `<div class="wear">
+    <div class="wear-head"><span class="wear-icon" aria-hidden="true">${c.icon}</span><b>服装のめやす：${esc(c.title)}</b></div>
+    <div class="wear-body">${esc(c.wear)}</div>
+    ${c.tips.length ? `<ul class="wear-tips">${c.tips.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+  </div>`;
+}
 
 function dayCard(day, title) {
   if (!day) return '';
@@ -363,7 +430,11 @@ function dayCard(day, title) {
       <div><dt>降水量</dt><dd>${f1(day.mm)}mm</dd></div>
       <div><dt>湿度</dt><dd>${day.rhMin}〜${day.rhMax}%</dd></div>
       <div><dt>最大風速</dt><dd>${wind(day.ws, day.wd)}</dd></div>
+      <div><dt>日照時間</dt><dd>${f1(day.sunH)}<small>h</small></dd></div>
+      <div><dt>積雪</dt><dd>${day.snow > 0 ? `${f1(day.snow)}<small>cm</small>` : '―'}</dd></div>
+      <div><dt>紫外線</dt><dd>${r1(day.uv)}</dd></div>
     </dl>
+    ${clothingBlock(day)}
   </article>`;
 }
 
@@ -446,6 +517,33 @@ function renderWeekly(m) {
     }).join('')}
   </ul><p class="muted small pad">左から：日付・天気・最低/最高気温・降水確率(☂=傘が必要)と降水量・最大風速(m/s)。先の日ほど予報の精度は下がります。</p></div>`;
 }
+
+// ---------- 台風 ----------
+function renderTyphoons() {
+  const banner = $('#typhoonBanner');
+  const tabBtn = document.querySelector('[data-tab="typhoon"]');
+  const list = state.typhoons?.data?.list || [];
+  tabBtn.hidden = !list.length;
+  document.querySelector('.tabs').classList.toggle('has-typhoon', list.length > 0);
+  if (!list.length) {
+    banner.hidden = true;
+    if (state.tab === 'typhoon') showTab('days');
+  } else {
+    const t = list[0];
+    const n = t.now || {};
+    banner.hidden = false;
+    banner.innerHTML = `<span class="ty-icon" aria-hidden="true">🌀</span>
+      <span class="ty-text"><b>${esc(typhoonTitle(t))}</b>${list.length > 1 ? ` ほか${list.length - 1}個` : ''}
+      <small>${[n.scale, n.intensity, n.category].filter(Boolean).join('・')}${n.pressure ? `／中心気圧 ${n.pressure}hPa` : ''}${n.windMax ? `／最大風速 ${n.windMax}m/s` : ''}</small></span>
+      <span class="chev">›</span>`;
+  }
+  if (state.tab === 'typhoon') typhoon.open(state.place, state.typhoons?.data);
+}
+
+$('#typhoonBanner').addEventListener('click', () => {
+  showTab('typhoon');
+  $('.tabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
 
 // ---------- 警報・注意報 ----------
 const LEVEL_CLASS = { 50: 'lv-special', 40: 'lv-danger', 30: 'lv-warning', 20: 'lv-advisory' };

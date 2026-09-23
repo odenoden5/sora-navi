@@ -3,10 +3,12 @@
 const HOURLY = [
   'weather_code', 'temperature_2m', 'precipitation_probability', 'precipitation',
   'relative_humidity_2m', 'wind_speed_10m', 'wind_direction_10m', 'is_day',
+  'snow_depth', 'sunshine_duration', 'uv_index', 'apparent_temperature',
 ];
 const DAILY = [
   'weather_code', 'temperature_2m_max', 'temperature_2m_min', 'precipitation_probability_max',
   'precipitation_sum', 'wind_speed_10m_max', 'wind_direction_10m_dominant',
+  'sunshine_duration', 'snowfall_sum', 'uv_index_max',
 ];
 
 export async function fetchForecast(lat, lon) {
@@ -89,6 +91,10 @@ export function buildModel(raw, settings) {
     ws: H.wind_speed_10m[i],
     wd: H.wind_direction_10m[i],
     isDay: H.is_day[i],
+    snow: H.snow_depth[i] == null ? null : H.snow_depth[i] * 100, // m → cm
+    sun: H.sunshine_duration[i], // 秒
+    uv: H.uv_index[i],
+    feels: H.apparent_temperature[i],
   }));
   for (const h of hourly) h.umbrella = isUmbrella(h.pop, h.mm, settings);
 
@@ -108,6 +114,9 @@ export function buildModel(raw, settings) {
     mm: D.precipitation_sum[i],
     ws: D.wind_speed_10m_max[i],
     wd: D.wind_direction_10m_dominant[i],
+    sunH: D.sunshine_duration[i] == null ? null : D.sunshine_duration[i] / 3600,
+    snowfall: D.snowfall_sum[i],
+    uv: D.uv_index_max[i],
   }));
   for (const d of daily) d.umbrella = (d.pop ?? 0) >= settings.umbrellaPop || (d.mm ?? 0) >= 1;
 
@@ -135,6 +144,12 @@ export function buildModel(raw, settings) {
       blocks,
       umbrella: hourRanges(umbrellaHours),
       mm: hs.reduce((a, h) => a + (h.mm ?? 0), 0),
+      sunH: d.sunH,
+      snow: Math.max(...hs.map((h) => h.snow ?? 0)),
+      snowfall: d.snowfall,
+      uv: d.uv,
+      feelsMax: Math.max(...hs.map((h) => h.feels ?? -99)),
+      feelsMin: Math.min(...hs.map((h) => h.feels ?? 99)),
       rhMin: Math.min(...rhs),
       rhMax: Math.max(...rhs),
       ws: Math.max(...hs.map((h) => h.ws ?? 0)),

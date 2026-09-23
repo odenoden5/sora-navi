@@ -228,7 +228,7 @@ img.wx.dim { opacity: .55; }
 
 /* ---- tabs ---- */
 .tabs {
-  display: grid; grid-template-columns: 1.35fr 1fr 1fr 1fr 1fr; gap: 3px;
+  display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr 1fr; gap: 3px;
   padding: 4px; border-radius: 16px; margin: 14px 0 14px;
   background: rgba(0, 0, 0, .16); border: 1px solid rgba(255, 255, 255, .12);
   scroll-margin-top: calc(130px + env(safe-area-inset-top));
@@ -238,6 +238,12 @@ img.wx.dim { opacity: .55; }
   font-size: .84rem; font-weight: 700; color: var(--muted); white-space: nowrap; transition: background .2s, color .2s;
 }
 .tabs button[aria-selected="true"] { background: #fff; color: var(--accent-ink); box-shadow: 0 4px 12px rgba(0, 0, 0, .18); }
+/* 台風タブが出ている間は6個になるので、狭い画面では横スクロールにする */
+@media (max-width: 480px) {
+  .tabs.has-typhoon { display: flex; overflow-x: auto; scrollbar-width: none; }
+  .tabs.has-typhoon::-webkit-scrollbar { display: none; }
+  .tabs.has-typhoon button { flex: none; padding: 0 14px; }
+}
 
 /* ---- days ---- */
 .day-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -367,6 +373,58 @@ img.wx.dim { opacity: .55; }
 .radar-legend span { display: inline-flex; align-items: center; gap: 3px; }
 .radar-legend i { width: 14px; height: 10px; border-radius: 2px; }
 
+
+/* ---- 台風 ---- */
+.ty-banner {
+  width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; cursor: pointer;
+  border: 0; border-radius: 16px; padding: 12px 16px; margin-top: 12px; min-height: 50px;
+  background: linear-gradient(135deg, #7b3fc4, #35257d); color: #fff; box-shadow: 0 8px 24px rgba(0, 0, 0, .18);
+}
+.ty-banner .ty-icon { font-size: 1.6rem; animation: spin 6s linear infinite; }
+.ty-banner .ty-text { display: grid; line-height: 1.3; }
+.ty-banner small { color: rgba(255, 255, 255, .8); font-size: .78rem; }
+.ty-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 14px 16px 10px; }
+.ty-head h2 { margin: 0; font-size: 1.2rem; }
+.ty-badge { font-size: .78rem; font-weight: 800; padding: 4px 10px; border-radius: 8px; background: rgba(255, 255, 255, .2); white-space: nowrap; }
+.ty-map { height: min(56vh, 460px); min-height: 300px; background: rgba(0, 0, 0, .2); position: relative; isolation: isolate; z-index: 0; }
+.ty-map .base-tiles { filter: invert(.92) hue-rotate(180deg) brightness(.95) contrast(.9) saturate(.6); }
+.ty-map .leaflet-control-attribution { font-size: 10px; background: rgba(0, 0, 0, .45); color: #ddd; }
+.ty-map .leaflet-control-attribution a { color: #cfe6ff; }
+.ty-map .leaflet-bar a { background: rgba(20, 30, 45, .85); color: #fff; border-color: rgba(255, 255, 255, .15); }
+.ty-pin span {
+  display: inline-block; padding: 1px 6px; border-radius: 8px; font-size: 11px; font-weight: 800; white-space: nowrap;
+  background: rgba(20, 30, 45, .8); color: #fff; border: 1px solid rgba(255, 255, 255, .5);
+}
+.ty-pin span.now { background: #ff3b30; border-color: #fff; }
+.ty-spec { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin: 0; background: var(--line); }
+.ty-spec > div { background: var(--card); padding: 8px 14px; }
+.ty-spec dt { font-size: .72rem; color: var(--muted); }
+.ty-spec dd { margin: 0; font-weight: 700; font-size: .95rem; }
+.ty-sub { margin: 14px 16px 6px; font-size: .95rem; }
+.ty-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.ty-table { border-collapse: collapse; width: max-content; min-width: 100%; font-size: .82rem; }
+.ty-table th, .ty-table td { padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; text-align: center; }
+.ty-table tr th:first-child {
+  position: sticky; left: 0; text-align: left; color: var(--muted); font-weight: 600; font-size: .75rem;
+  background: color-mix(in srgb, var(--sky-solid) 90%, transparent);
+}
+@supports not (background: color-mix(in srgb, red 50%, transparent)) { .ty-table tr th:first-child { background: var(--sky-solid); } }
+.ty-table tr:first-child th { font-weight: 800; }
+
+/* ---- アメダス実況 ---- */
+.obs { border-radius: 16px; padding: 10px 14px; margin-top: 12px; }
+.obs-items { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: .92rem; }
+.obs-items b { color: var(--muted); font-weight: 600; font-size: .78rem; margin-right: 3px; }
+.obs-items small { font-size: .7rem; }
+
+/* ---- 服装のめやす ---- */
+.wear { margin-top: 12px; border-radius: 16px; padding: 12px 14px; background: var(--bg); }
+.wear-head { display: flex; align-items: center; gap: 8px; font-size: 1rem; }
+.wear-icon { font-size: 1.5rem; }
+.wear-body { margin-top: 2px; font-size: .92rem; }
+.wear-tips { margin: 8px 0 0; padding-left: 1.1em; font-size: .82rem; color: var(--muted); }
+.wear-tips li { margin-bottom: 2px; }
+
 /* ---- dialogs ---- */
 .sheet {
   width: min(560px, 100%); max-height: 85vh; margin: auto auto 0; border: 0; border-radius: 24px 24px 0 0;
@@ -446,6 +504,7 @@ img.wx.dim { opacity: .55; }
   .radar-map { height: min(70vh, 760px); }
   .hcol, .hcell { width: 64px; }
   .quakes { display: grid; grid-template-columns: 1fr 1fr; }
+  .ty-spec { grid-template-columns: repeat(4, 1fr); }
   .quake:nth-child(odd) { border-right: 1px solid var(--line); }
   .footer { text-align: center; }
 }

@@ -1,9 +1,9 @@
 // アプリ本体をキャッシュしてオフラインでも起動できるようにする。
 // 気象データ（外部API）はキャッシュせず、アプリ側で前回データを保存して表示する。
-const VERSION = 'v1.5.0';
+const VERSION = 'v1.6.0';
 const SHELL = [
-  './', 'index.html', 'style.css?v=1.5.0', 'app.js?v=1.5.0', 'weather.js?v=1.5.0', 'jma.js?v=1.5.0',
-  'geo.js?v=1.5.0', 'radar.js?v=1.5.0', 'manifest.json',
+  './', 'index.html', 'style.css?v=1.6.0', 'app.js?v=1.6.0', 'weather.js?v=1.6.0', 'jma.js?v=1.6.0',
+  'geo.js?v=1.6.0', 'radar.js?v=1.6.0', 'typhoon.js?v=1.6.0', 'amedas.js?v=1.6.0', 'clothing.js?v=1.6.0', 'manifest.json',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png',
 ];
 

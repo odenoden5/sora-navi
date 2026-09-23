@@ -69,7 +69,7 @@ export async function fetchFrames() {
 }
 
 let leafletPromise;
-function loadLeaflet() {
+export function loadLeaflet() {
   if (window.L) return Promise.resolve(window.L);
   if (!leafletPromise) {
     leafletPromise = new Promise((resolve, reject) => {

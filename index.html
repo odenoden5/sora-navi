@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css?v=1.5.0">
+  <link rel="stylesheet" href="style.css?v=1.6.0">
 </head>
 <body data-sky="partly">
   <header class="topbar">
@@ -40,6 +40,7 @@
   <div id="offline" class="notice offline" hidden></div>
   <div id="quakeAlert" class="quake-alert" hidden></div>
   <button id="warnBanner" class="warn-banner" hidden></button>
+  <button id="typhoonBanner" class="ty-banner" hidden></button>
 
   <section id="hero" class="hero" aria-live="polite"></section>
   </aside>
@@ -50,6 +51,7 @@
     <button role="tab" data-tab="hourly" aria-selected="false">1時間</button>
     <button role="tab" data-tab="weekly" aria-selected="false">2週間</button>
     <button role="tab" data-tab="radar" aria-selected="false">雨雲</button>
+    <button role="tab" data-tab="typhoon" aria-selected="false" hidden>台風</button>
     <button role="tab" data-tab="quake" aria-selected="false">地震</button>
   </div>
 
@@ -58,6 +60,7 @@
     <section id="tab-hourly" class="tab-panel" hidden></section>
     <section id="tab-weekly" class="tab-panel" hidden></section>
     <section id="tab-radar" class="tab-panel" hidden></section>
+    <section id="tab-typhoon" class="tab-panel" hidden></section>
     <section id="tab-quake" class="tab-panel" hidden></section>
   </main>
   </div>
@@ -117,14 +120,14 @@
         'またはローカルサーバー（http://localhost）経由で開いてください。詳しくは README.md を参照。</div>');
     }
   </script>
-  <script type="module" src="app.js?v=1.5.0"></script>
+  <script type="module" src="app.js?v=1.6.0"></script>
   <script>
     // 古い app.js がキャッシュから読み込まれた場合などに、真っ白のままにせず案内を出す
     setTimeout(function () {
-      if (location.protocol === 'file:' || window.__appVersion === '1.5.0') return;
+      if (location.protocol === 'file:' || window.__appVersion === '1.6.0') return;
       document.body.insertAdjacentHTML('afterbegin',
         '<div style="background:#fff4bf;color:#5a4600;padding:12px 14px;border-radius:12px;margin:12px 0;font-size:14px">' +
-        '⚠ アプリの一部が古いまま、または読み込めていません（表示中: ' + (window.__appVersion || '不明') + ' / 必要: 1.5.0）。' +
+        '⚠ アプリの一部が古いまま、または読み込めていません（表示中: ' + (window.__appVersion || '不明') + ' / 必要: 1.6.0）。' +
         '全ファイルがアップロードされているか確認し、数分おいてページを再読み込みしてください。</div>');
     }, 6000);
   </script>
